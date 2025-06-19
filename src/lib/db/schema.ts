@@ -7,6 +7,7 @@ export const katiaCompanies = pgTable('katia_companies', {
   representative: text('representative').notNull(),
   address: text('address').notNull(),
   phone: text('phone').notNull(),
+  linkIdx: text('link_idx'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

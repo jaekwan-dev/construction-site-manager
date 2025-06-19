@@ -1,0 +1,1 @@
+ALTER TABLE "katia_companies" ADD COLUMN "link_idx" text;

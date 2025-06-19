@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         const allAssessments: TrafficAssessmentInfo[] = [];
         
         // 검색 조건 설정
-        const startDate = '2024-01-01'; // 2024년부터로 확장
+        const startDate = '2025-01-01'; // 2024년부터로 확장
         const endDate = new Date().toISOString().split('T')[0]; // 오늘까지
         
         console.log(`검색 기간: ${startDate} ~ ${endDate}`);

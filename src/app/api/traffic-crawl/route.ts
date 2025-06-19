@@ -53,12 +53,14 @@ export async function GET() {
         const startDateInput = document.querySelector('#s_st_dt') as HTMLInputElement;
         if (startDateInput) {
           startDateInput.value = startDate;
+          startDateInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
         
         // 종료일 설정
         const endDateInput = document.querySelector('#s_en_dt') as HTMLInputElement;
         if (endDateInput) {
           endDateInput.value = endDate;
+          endDateInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
         
         // 사업명 설정
@@ -68,18 +70,37 @@ export async function GET() {
         }
       }, startDate, endDate, businessName);
       
-      // 검색 버튼 클릭
-      await page.click('input[type="button"][value="검색"]');
+      // 검색 버튼 찾기 및 클릭 (여러 방법 시도)
+      const searchButton = await page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('input[type="button"], button, input[type="submit"]'));
+        const searchButton = buttons.find(btn => {
+          const text = btn.textContent || btn.getAttribute('value') || '';
+          return text.includes('검색') || text.includes('Search');
+        });
+        return searchButton ? true : false;
+      });
+      
+      if (searchButton) {
+        await page.click('input[type="button"][value*="검색"], button:contains("검색"), input[type="submit"][value*="검색"]');
+      } else {
+        // 검색 버튼을 찾지 못한 경우 폼 제출 시도
+        await page.evaluate(() => {
+          const form = document.querySelector('form');
+          if (form) {
+            form.submit();
+          }
+        });
+      }
       
       // 검색 결과 로딩 대기
       await new Promise(resolve => setTimeout(resolve, 3000));
       
       // 모든 페이지 크롤링
-      let pageNum = 1;
+      let currentPageNum = 1;
       let hasNextPage = true;
       
-      while (hasNextPage && pageNum <= 10) { // 최대 10페이지까지만 크롤링
-        console.log(`=== 페이지 ${pageNum} 크롤링 시작 ===`);
+      while (hasNextPage) {
+        console.log(`=== 페이지 ${currentPageNum} 크롤링 시작 ===`);
         
         // 페이지 로딩 대기
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -161,51 +182,45 @@ export async function GET() {
         });
         
         allAssessments.push(...pageAssessments);
-        console.log(`페이지 ${pageNum}: ${pageAssessments.length}개 교통영향평가 정보 수집`);
+        console.log(`페이지 ${currentPageNum}: ${pageAssessments.length}개 교통영향평가 정보 수집`);
         console.log(`누적 수집: ${allAssessments.length}개`);
         
-        // 다음 페이지 확인 및 클릭
-        const nextPageInfo = await page.evaluate(() => {
-          const anchors = Array.from(document.querySelectorAll('a'));
-          const nextButton = anchors.find(a =>
-            a.title && a.title.includes('다음') && a.textContent && a.textContent.trim() === '>'
-          );
+        // 다음 페이지로 이동
+        const nextPageResult = await page.evaluate((currentPage) => {
+          // 현재 페이지가 10의 배수인지 확인 (10, 20, 30...)
+          const isMultipleOfTen = currentPage % 10 === 0;
           
-          return {
-            hasNext: !!nextButton,
-            nextButtonText: nextButton?.textContent,
-            nextButtonTitle: nextButton?.title,
-            nextButtonHref: nextButton?.getAttribute('href'),
-            allAnchors: anchors.map(a => ({
-              text: a.textContent?.trim(),
-              title: a.title,
-              href: a.getAttribute('href')
-            })).filter(a => a.text === '>' || a.title?.includes('다음'))
-          };
-        });
-        
-        console.log(`다음 페이지 정보:`, nextPageInfo);
-        
-        if (nextPageInfo.hasNext && pageNum < 10) {
-          try {
-            await page.evaluate(() => {
-              const anchors = Array.from(document.querySelectorAll('a'));
-              const next = anchors.find(a =>
-                a.title && a.title.includes('다음') && a.textContent && a.textContent.trim() === '>'
-              );
-              if (next) {
-                console.log('다음 페이지 클릭:', next.getAttribute('href'));
-                (next as HTMLElement).click();
-              }
-            });
-            pageNum++;
-            await new Promise(resolve => setTimeout(resolve, 3000)); // 페이지 로딩 대기 시간 증가
-          } catch (error) {
-            console.log('다음 페이지 이동 실패:', error);
-            hasNextPage = false;
+          if (isMultipleOfTen) {
+            // 10의 배수 페이지에서는 "다음" 버튼 클릭
+            const nextButton = document.querySelector('a[href*="fn_link_page"][title*="다음"]');
+            if (nextButton) {
+              console.log('다음 버튼 클릭:', nextButton.getAttribute('href'));
+              (nextButton as HTMLElement).click();
+              return { success: true, method: 'next_button', nextPage: currentPage + 1 };
+            } else {
+              return { success: false, method: 'next_button_not_found' };
+            }
+          } else {
+            // 일반 페이지에서는 다음 번호 페이지로 이동
+            const nextPageNum = currentPage + 1;
+            const nextPageLink = document.querySelector(`a[href*="fn_link_page(${nextPageNum})"]`);
+            if (nextPageLink) {
+              console.log(`페이지 ${nextPageNum} 클릭:`, nextPageLink.getAttribute('href'));
+              (nextPageLink as HTMLElement).click();
+              return { success: true, method: 'page_number', nextPage: nextPageNum };
+            } else {
+              return { success: false, method: 'page_number_not_found', nextPage: nextPageNum };
+            }
           }
+        }, currentPageNum);
+        
+        console.log(`페이지 이동 결과:`, nextPageResult);
+        
+        if (nextPageResult.success && nextPageResult.nextPage) {
+          currentPageNum = nextPageResult.nextPage;
+          await new Promise(resolve => setTimeout(resolve, 3000));
         } else {
-          console.log('다음 페이지가 없거나 최대 페이지 수에 도달');
+          console.log('더 이상 이동할 페이지가 없음');
           hasNextPage = false;
         }
       }

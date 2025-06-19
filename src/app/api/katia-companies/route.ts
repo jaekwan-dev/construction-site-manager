@@ -7,6 +7,7 @@ interface CompanyInfo {
   representative: string;
   address: string;
   phone: string;
+  linkIdx?: string;
 }
 
 // 임시 메모리 저장소 (데이터베이스 연결 실패 시 사용)
@@ -24,7 +25,15 @@ export async function GET(request: NextRequest) {
     try {
       const { db } = await import('@/lib/db');
       const { katiaCompanies } = await import('@/lib/db/schema');
-      existingCompanies = await db.select().from(katiaCompanies);
+      const dbCompanies = await db.select().from(katiaCompanies);
+      existingCompanies = dbCompanies.map(company => ({
+        number: company.number,
+        companyName: company.companyName,
+        representative: company.representative,
+        address: company.address,
+        phone: company.phone,
+        linkIdx: company.linkIdx || undefined
+      }));
       dbConnected = true;
       console.log('데이터베이스 연결 성공');
     } catch (dbError) {
@@ -70,10 +79,27 @@ export async function GET(request: NextRequest) {
               
               if (cells.length >= 5) {
                 const number = cells[0]?.textContent?.trim() || '';
-                const companyName = cells[1]?.textContent?.trim() || '';
+                const companyNameCell = cells[1];
+                const companyName = companyNameCell?.textContent?.trim() || '';
                 const representative = cells[2]?.textContent?.trim() || '';
                 const address = cells[3]?.textContent?.trim() || '';
                 const phone = cells[4]?.textContent?.trim() || '';
+                
+                // 회사명 링크에서 link_idx 추출
+                let linkIdx = '';
+                if (companyNameCell) {
+                  const link = companyNameCell.querySelector('a');
+                  if (link) {
+                    const href = link.getAttribute('href');
+                    if (href) {
+                      // javascript:sendPage_('v', '477','1') 형태에서 '477' 추출
+                      const match = href.match(/sendPage_\('v',\s*'(\d+)',\s*'\d+'\)/);
+                      if (match) {
+                        linkIdx = match[1];
+                      }
+                    }
+                  }
+                }
                 
                 // 번호가 숫자인 경우만 유효한 데이터로 간주
                 if (number && !isNaN(Number(number))) {
@@ -82,7 +108,8 @@ export async function GET(request: NextRequest) {
                     companyName,
                     representative,
                     address,
-                    phone
+                    phone,
+                    linkIdx: linkIdx || undefined
                   });
                 }
               }
@@ -122,7 +149,8 @@ export async function GET(request: NextRequest) {
                 companyName: company.companyName,
                 representative: company.representative,
                 address: company.address,
-                phone: company.phone
+                phone: company.phone,
+                linkIdx: company.linkIdx
               }))
             );
             console.log('데이터베이스에 새 데이터 저장 완료');
