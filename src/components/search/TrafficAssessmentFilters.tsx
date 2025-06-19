@@ -114,7 +114,7 @@ export default function TrafficAssessmentFilters({ assessments, onFiltersChange 
                 variant="outline"
                 size="sm"
                 onClick={clearFilters}
-                className="h-8 px-3 border-orange-200 text-orange-700 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-800 transition-all duration-200 shadow-sm hover:shadow-md group"
+                className="h-8 px-3 border-orange-200 text-orange-700 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-800 transition-all duration-200 shadow-sm hover:shadow-md group cursor-pointer"
               >
                 <X className="h-4 w-4 mr-1.5 group-hover:rotate-90 transition-transform duration-200" />
                 <span className="font-medium">필터 초기화</span>

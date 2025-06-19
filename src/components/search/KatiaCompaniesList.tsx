@@ -207,6 +207,7 @@ export default function KatiaCompaniesList() {
             disabled={loading}
             size="sm"
             variant="outline"
+            className="cursor-pointer"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -322,6 +323,7 @@ export default function KatiaCompaniesList() {
                     size="sm"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
+                    className="cursor-pointer"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -335,7 +337,7 @@ export default function KatiaCompaniesList() {
                           variant={currentPage === page ? "default" : "outline"}
                           size="sm"
                           onClick={() => handlePageChange(page as number)}
-                          className="min-w-[40px]"
+                          className="min-w-[40px] cursor-pointer"
                         >
                           {page}
                         </Button>
@@ -348,6 +350,7 @@ export default function KatiaCompaniesList() {
                     size="sm"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
+                    className="cursor-pointer"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
