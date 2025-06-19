@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,7 +27,7 @@ export function CompanyContactDialog({ companyName, children }: CompanyContactDi
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
-  const searchCompanyInfo = async () => {
+  const searchCompanyInfo = useCallback(async () => {
     if (!open) return;
     
     setLoading(true);
@@ -50,13 +50,13 @@ export function CompanyContactDialog({ companyName, children }: CompanyContactDi
     } finally {
       setLoading(false);
     }
-  };
+  }, [open, companyName]);
 
   useEffect(() => {
     if (open) {
       searchCompanyInfo();
     }
-  }, [open, companyName]);
+  }, [open, companyName, searchCompanyInfo]);
 
   const handleWebsiteClick = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');

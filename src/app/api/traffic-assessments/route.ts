@@ -263,7 +263,7 @@ export async function POST() {
     
     // 전체 개수
     const totalResult = await db.execute('SELECT COUNT(*) as total FROM traffic_assessments');
-    const total = parseInt(totalResult.rows[0]?.total || '0');
+    const total = parseInt(String(totalResult.rows[0]?.total) || '0');
 
     // 연도별 개수
     const yearStatsResult = await db.execute(`

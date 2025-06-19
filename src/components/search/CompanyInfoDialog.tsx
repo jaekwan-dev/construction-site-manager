@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,13 +27,7 @@ export default function CompanyInfoDialog({ isOpen, onClose, companyName }: Comp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen && companyName) {
-      fetchCompanyInfo();
-    }
-  }, [isOpen, companyName]);
-
-  const fetchCompanyInfo = async () => {
+  const fetchCompanyInfo = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -51,7 +45,13 @@ export default function CompanyInfoDialog({ isOpen, onClose, companyName }: Comp
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyName]);
+
+  useEffect(() => {
+    if (isOpen && companyName) {
+      fetchCompanyInfo();
+    }
+  }, [isOpen, companyName, fetchCompanyInfo]);
 
   const handleClose = () => {
     setCompanies([]);

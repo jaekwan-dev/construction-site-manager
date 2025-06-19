@@ -4,10 +4,10 @@ import { trafficImpactCrawler } from '@/lib/utils/crawler';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
@@ -24,8 +24,9 @@ export async function GET(
     console.error('교통영향평가 상세정보 API 오류:', error);
     
     // 크롤링 실패 시 예시 데이터 반환
+    const { id } = await params;
     const mockDetail: TrafficAssessmentDetail = {
-      id: params.id,
+      id: id,
       projectName: '포천시 신북면 가채리 714번지 일원 가채2지구 지구단위계획 교통영향평가',
       year: '2028',
       company: '주식회사 세븐틴그룹',
