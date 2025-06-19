@@ -273,3 +273,4 @@ export default function CompanyInfoDialog({ isOpen, onClose, companyName }: Comp
     </Dialog>
   )
 }
+ 

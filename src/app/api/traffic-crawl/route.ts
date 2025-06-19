@@ -31,7 +31,7 @@ export async function GET() {
       const allAssessments: TrafficAssessmentInfo[] = [];
       
       // 검색 조건 설정
-      const startDate = '2024-01-01'; // 2024년부터로 확장
+      const startDate = '2020-01-01'; // 2024년부터로 확장
       const endDate = new Date().toISOString().split('T')[0]; // 오늘까지
       const businessName = '약식'; // 사업명 검색 조건
       
@@ -70,26 +70,32 @@ export async function GET() {
         }
       }, startDate, endDate, businessName);
       
-      // 검색 버튼 찾기 및 클릭 (여러 방법 시도)
-      const searchButton = await page.evaluate(() => {
-        const buttons = Array.from(document.querySelectorAll('input[type="button"], button, input[type="submit"]'));
-        const searchButton = buttons.find(btn => {
-          const text = btn.textContent || btn.getAttribute('value') || '';
-          return text.includes('검색') || text.includes('Search');
-        });
-        return searchButton ? true : false;
-      });
-      
-      if (searchButton) {
-        await page.click('input[type="button"][value*="검색"], button:contains("검색"), input[type="submit"][value*="검색"]');
-      } else {
-        // 검색 버튼을 찾지 못한 경우 폼 제출 시도
-        await page.evaluate(() => {
-          const form = document.querySelector('form');
-          if (form) {
-            form.submit();
-          }
-        });
+      // 검색 버튼 클릭 (여러 방법 시도)
+      try {
+        // 방법 1: 실제 검색 버튼 (a 태그)
+        await page.click('a.submit-btn');
+      } catch {
+        console.log('기본 검색 버튼을 찾을 수 없음, 다른 방법 시도...');
+        try {
+          // 방법 2: 텍스트가 "검색"인 링크
+          await page.click('a:has-text("검색")');
+        } catch {
+          console.log('검색 버튼을 찾을 수 없음, 폼 제출 시도...');
+          // 방법 3: 폼 제출
+          await page.evaluate(() => {
+            const form = document.querySelector('form');
+            if (form) {
+              form.submit();
+            } else {
+              // 방법 4: Enter 키로 제출
+              const searchInput = document.querySelector('#s_bsns_nm') as HTMLInputElement;
+              if (searchInput) {
+                searchInput.focus();
+                searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+              }
+            }
+          });
+        }
       }
       
       // 검색 결과 로딩 대기

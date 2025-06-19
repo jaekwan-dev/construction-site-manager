@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import puppeteer from 'puppeteer';
 
 interface CompanyInfo {
+  id?: number;
   number: string;
   companyName: string;
   representative: string;
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest) {
       const { katiaCompanies } = await import('@/lib/db/schema');
       const dbCompanies = await db.select().from(katiaCompanies);
       existingCompanies = dbCompanies.map(company => ({
+        id: company.id,
         number: company.number,
         companyName: company.companyName,
         representative: company.representative,
@@ -143,7 +145,7 @@ export async function GET(request: NextRequest) {
           if (allCompanies.length > 0) {
             const { db } = await import('@/lib/db');
             const { katiaCompanies } = await import('@/lib/db/schema');
-            await db.insert(katiaCompanies).values(
+            const insertedCompanies = await db.insert(katiaCompanies).values(
               allCompanies.map(company => ({
                 number: company.number,
                 companyName: company.companyName,
@@ -152,8 +154,28 @@ export async function GET(request: NextRequest) {
                 phone: company.phone,
                 linkIdx: company.linkIdx
               }))
-            );
+            ).returning();
             console.log('데이터베이스에 새 데이터 저장 완료');
+            
+            // 저장된 데이터에 id 포함하여 반환
+            const companiesWithId = insertedCompanies.map((company) => ({
+              id: company.id,
+              number: company.number,
+              companyName: company.companyName,
+              representative: company.representative,
+              address: company.address,
+              phone: company.phone,
+              linkIdx: company.linkIdx || undefined
+            }));
+            
+            return NextResponse.json({
+              success: true,
+              companies: companiesWithId,
+              totalCount: companiesWithId.length,
+              message: '크롤링 및 데이터 저장 완료',
+              isNewData: true,
+              dbConnected
+            });
           }
         } else {
           // 임시 저장소에 저장
