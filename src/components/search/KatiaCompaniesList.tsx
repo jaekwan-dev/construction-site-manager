@@ -202,7 +202,7 @@ export default function KatiaCompaniesList() {
               </Badge>
             )}
           </div>
-          <Button
+          {/* <Button
             onClick={handleRefresh}
             disabled={loading}
             size="sm"
@@ -215,7 +215,7 @@ export default function KatiaCompaniesList() {
               <RefreshCw className="h-4 w-4" />
             )}
             새로고침
-          </Button>
+          </Button> */}
         </div>
         
         {lastUpdated && (
